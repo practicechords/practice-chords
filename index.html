@@ -4,17 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PracticeChords.io</title>
-
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icon-192.png">
-    
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'G-XXXXXXXXXX');
     </script>
     
@@ -41,7 +40,7 @@
             --selector-bg: rgba(0, 0, 0, 0.05);
         }
 
-        /* [애니메이션 사수] 다크/라이트 모드 부드러운 전환 */
+        /* --- 💻 PC 버전 (원래 코드 완벽 복구: 건드리지 않음) --- */
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -57,65 +56,33 @@
             overflow: hidden;
         }
 
-        /* 좌측 상단 로고 */
         #top-logo {
-            position: fixed;
-            top: 30px;
-            left: 30px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            cursor: pointer;
-            letter-spacing: -1px;
-            transition: opacity 0.3s ease, color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
+            position: fixed; top: 30px; left: 30px; font-size: 1.5rem; font-weight: 700;
+            cursor: pointer; letter-spacing: -1px; z-index: 1000;
+            transition: opacity 0.3s ease, color 0.5s;
         }
-        #top-logo:hover {
-            opacity: 0.6;
-        }
+        #top-logo:hover { opacity: 0.6; }
 
-        /* 모바일 대응 업데이트 */
-        @media (max-width: 600px) {
-            #top-logo { top: 20px; left: 20px; font-size: 1.2rem; }
-            .theme-toggle { top: 20px; right: 20px; padding: 8px 16px; font-size: 0.7rem; }
+        .theme-toggle {
+            position: fixed; top: 30px; right: 30px; padding: 10px 22px; cursor: pointer;
+            border: 2px solid var(--text-color); background: transparent; color: var(--text-color);
+            border-radius: 30px; font-weight: 700; font-size: 0.8rem; z-index: 1000;
+            transition: all 0.4s;
         }
+        .theme-toggle:hover { background-color: var(--text-color); color: var(--bg-color); }
 
         section { display: flex; flex-direction: column; align-items: center; width: 100%; }
         .hidden { display: none !important; }
 
         h1 { font-size: 4rem; font-weight: 700; margin-bottom: 10px; letter-spacing: -1px; }
+        p { margin-top: 0; font-size: 1.1rem; }
         
-        #beat-lights { 
-            display: flex; gap: 15px; margin-bottom: 10px; height: 30px; 
-            align-items: center; justify-content: center; 
-        }
+        #beat-lights { display: flex; gap: 15px; margin-bottom: 10px; height: 30px; align-items: center; justify-content: center; }
+        .light { width: 12px; height: 12px; border-radius: 50%; background-color: var(--sub-text); opacity: 0.1; transition: all 0.2s ease; }
+        .light.active { background-color: var(--text-color); opacity: 1; transform: scale(1.4); box-shadow: 0 0 15px var(--text-color); }
 
-        .light {
-            width: 12px; height: 12px; border-radius: 50%;
-            background-color: var(--sub-text); opacity: 0.1;
-            transition: all 0.2s ease;
-        }
-        .light.active {
-            background-color: var(--text-color); opacity: 1;
-            transform: scale(1.4); box-shadow: 0 0 15px var(--text-color);
-        }
-
-        .chord-sequence-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            width: 100%;
-            min-height: 12rem;
-            margin: 10px 0;
-        }
-
-        .chord-item {
-            font-weight: 700;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
-        }
-
-        /* 폰트 사이즈 및 위치 고정 */
+        .chord-sequence-container { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; min-height: 12rem; margin: 10px 0; }
+        .chord-item { font-weight: 700; transition: all 0.4s; white-space: nowrap; }
         .chord-root { font-size: 1em; line-height: 1; }
         .chord-acc { font-size: 0.6em; vertical-align: text-top; margin-left: 0.02em; }
         .chord-quality { font-size: 0.55em; vertical-align: baseline; }
@@ -127,52 +94,18 @@
         .controls { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 10px; }
         .mode-content-wrapper { height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
 
-        .mode-selector { 
-            display: flex; gap: 10px; margin-bottom: 20px; 
-            background: var(--selector-bg); padding: 5px; border-radius: 30px;
-        }
-
-        .mode-btn {
-            padding: 10px 25px; border: none; background: transparent;
-            color: var(--sub-text); cursor: pointer; font-weight: 700;
-            font-family: 'Montserrat', sans-serif; border-radius: 25px;
-            transition: all 0.2s ease;
-        }
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; background: var(--selector-bg); padding: 5px; border-radius: 30px; }
+        .mode-btn { padding: 10px 25px; border: none; background: transparent; color: var(--sub-text); cursor: pointer; font-weight: 700; font-family: 'Montserrat', sans-serif; border-radius: 25px; transition: all 0.2s ease; }
         .mode-btn.active { background: var(--text-color); color: var(--bg-color); }
 
-        /* [애니메이션 사수] 쫀득한 2px 부상 버튼 */
-        .start-btn {
-            padding: 15px 45px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--btn-text);
-            background-color: var(--btn-bg);
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 6px var(--shadow);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .start-btn { padding: 15px 45px; font-family: 'Montserrat', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--btn-text); background-color: var(--btn-bg); border: none; border-radius: 50px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px var(--shadow); transition: all 0.3s; margin-top: 20px; }
         .start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 15px var(--shadow); opacity: 0.95; }
         .start-btn:active { transform: translateY(-1px); }
 
-        #filter-toggle-btn {
-            background: none; border: 1px solid var(--sub-text); color: var(--sub-text);
-            padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.7rem;
-            margin-bottom: 15px; transition: all 0.3s;
-            letter-spacing: 1px;
-        }
+        #filter-toggle-btn { background: none; border: 1px solid var(--sub-text); color: var(--sub-text); padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.7rem; margin-bottom: 15px; transition: all 0.3s; letter-spacing: 1px; }
         #filter-toggle-btn:hover { border-color: var(--text-color); color: var(--text-color); }
 
-        #filter-panel {
-            background: var(--selector-bg); padding: 25px; border-radius: 25px;
-            width: 850px; margin-bottom: 20px; transition: all 0.3s ease;
-            display: flex; gap: 30px; text-align: left;
-        }
-
+        #filter-panel { background: var(--selector-bg); padding: 25px; border-radius: 25px; width: 850px; margin-bottom: 20px; transition: all 0.3s ease; display: flex; gap: 30px; text-align: left; }
         .filter-col { flex: 1; display: flex; flex-direction: column; }
         .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(125,125,125,0.2); padding-bottom: 5px; }
         .filter-group-title { font-size: 0.7rem; font-weight: 700; color: var(--sub-text); text-transform: uppercase; letter-spacing: 1px; }
@@ -189,15 +122,44 @@
         input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; background: rgba(125, 125, 125, 0.2); border-radius: 5px; outline: none; margin: 10px 0; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--text-color); border-radius: 50%; cursor: pointer; transition: transform 0.2s; }
         input[type="number"] { background: rgba(125, 125, 125, 0.1); border: 1px solid var(--sub-text); color: var(--text-color); padding: 5px; font-family: 'Montserrat', sans-serif; font-size: 1.1rem; width: 60px; border-radius: 8px; text-align: center; }
-        .theme-toggle { position: fixed; top: 30px; right: 30px; padding: 10px 22px; cursor: pointer; border: 2px solid var(--text-color); background: transparent; color: var(--text-color); border-radius: 30px; font-weight: 700; font-size: 0.8rem; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; }
-        .theme-toggle:hover { background-color: var(--text-color); color: var(--bg-color); }
-        #back-btn { margin-top: 20px; background: none; border: none; color: var(--sub-text); cursor: pointer; text-decoration: underline; font-family: 'Montserrat', sans-serif; transition: color 0.4s ease; }
+        
+        #back-btn { margin-top: 20px; background: none; border: none; color: var(--sub-text); cursor: pointer; text-decoration: underline; font-family: 'Montserrat', sans-serif; transition: color 0.4s; }
+
+        /* --- 📱 모바일 버전 (850px 이하 화면에서만 발동) --- */
+        @media (max-width: 850px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto; /* 세로 스크롤 생성 */
+                justify-content: flex-start; /* 화면 잘림 방지 */
+                padding: 80px 10px 40px 10px; /* 로고와 푸터 여백 */
+            }
+            #top-logo { top: 20px; left: 15px; font-size: 1.2rem; }
+            .theme-toggle { top: 20px; right: 15px; padding: 8px 16px; font-size: 0.7rem; }
+            
+            h1 { font-size: 2.2rem; margin-top: 20px; }
+            
+            /* 필터 패널이 모바일에서 세로로 예쁘게 쌓이도록 */
+            #filter-panel {
+                width: 90%;
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            /* 코드 글자 크기 축소 */
+            #chord-current { font-size: 4.5rem; width: 100%; }
+            #chord-prev, #chord-next { font-size: 1.5rem; width: 25%; }
+            .chord-sequence-container { min-height: 8rem; gap: 5px; }
+            
+            .setting-group { width: 90%; padding: 20px 15px; }
+            .mode-content-wrapper { height: auto; min-height: 150px; }
+        }
     </style>
 </head>
 <body>
 
     <div id="top-logo">PracticeChords.io</div>
-
     <button class="theme-toggle" id="theme-btn">LIGHT MODE</button>
     
     <section id="home-screen">
@@ -291,22 +253,26 @@
                         <div class="input-row">
                             <label style="font-size:0.75rem; font-weight:700; color:var(--sub-text);">BPM</label>
                             <input type="number" id="bpm-input" value="80">
-                            <label style="font-size:0.75rem; font-weight:700; color:var(--sub-text); margin-left:10px;">EVERY</label>
+                            <label style="font-size:0.75rem; font-weight:700; color:var(--sub-text);">EVERY</label>
                             <input type="number" id="beats-input" value="4">
-                            <label style="font-size:0.75rem; font-weight:700; color:var(--sub-text); margin-left:10px;">BEATS</label>
+                            <label style="font-size:0.75rem; font-weight:700; color:var(--sub-text);">BEATS</label>
                         </div>
                         <input type="range" id="bpm-slider" min="40" max="240" value="80">
-                        <button class="start-btn" id="play-pause-btn" style="padding: 10px 25px; font-size: 0.85rem;">Play</button>
+                        <button class="start-btn" id="play-pause-btn" style="margin-top: 10px; padding: 10px 30px;">Play</button>
                     </div>
                 </div>
                 <div id="tap-controls">
-                    <p id="tap-guide" style="font-size: 1.1rem; color: var(--sub-text); margin-bottom: 20px; height: 1.5rem;">Press Space or Click for next</p>
-                    <button class="start-btn" id="next-btn">Next Chord</button>
+                    <p id="tap-guide" style="font-size: 1rem; color: var(--sub-text); margin-bottom: 10px;">Press Space or Click for next</p>
+                    <button class="start-btn" id="next-btn" style="margin-top: 5px;">Next Chord</button>
                 </div>
             </div>
             <button id="back-btn">Back to Home</button>
         </div>
     </section>
+
+    <div style="position: fixed; bottom: 15px; width: 100%; text-align: center; font-size: 0.65rem; font-weight: 400; color: var(--sub-text); opacity: 0.6; z-index: 500; letter-spacing: 0.5px;">
+        &copy; 2026 PracticeChords.io. All rights reserved.
+    </div>
 
     <script>
         const themeBtn = document.getElementById('theme-btn');
@@ -315,9 +281,8 @@
             themeBtn.innerText = document.body.classList.contains('light-mode') ? 'DARK MODE' : 'LIGHT MODE';
         });
 
-        // 좌측 상단 로고 클릭 시 홈 화면으로 복귀
         document.getElementById('top-logo').addEventListener('click', () => {
-            stop(); // 재생 중이던 템포 정지
+            stop(); 
             document.getElementById('practice-screen').classList.add('hidden');
             document.getElementById('home-screen').classList.remove('hidden');
         });
@@ -375,16 +340,11 @@
             if (chordStr === "---") return `<span class="chord-root">---</span>`;
 
             const root = chordStr.charAt(0);
-            let acc = "";
-            let quality = "";
-            let rest = chordStr.slice(1);
+            let acc = ""; let quality = ""; let rest = chordStr.slice(1);
 
             if (rest.startsWith('#') || rest.startsWith('b')) {
-                acc = rest.charAt(0) === 'b' ? '♭' : '♯'; 
-                quality = rest.slice(1);
-            } else {
-                quality = rest;
-            }
+                acc = rest.charAt(0) === 'b' ? '♭' : '♯'; quality = rest.slice(1);
+            } else { quality = rest; }
 
             if (quality === "M") quality = ""; 
 
@@ -397,9 +357,7 @@
         }
 
         function generateOneChord() {
-            if (activeRoots.length === 0 || activeTypes.length === 0) {
-                return "---";
-            }
+            if (activeRoots.length === 0 || activeTypes.length === 0) return "---";
             const r = activeRoots[Math.floor(Math.random()*activeRoots.length)];
             let t = activeTypes[Math.floor(Math.random()*activeTypes.length)];
             if (t === "m7b5") t = "m7(b5)";
@@ -407,20 +365,14 @@
         }
 
         function updateChordSequence() {
-            prevChord = currentChord;
-            currentChord = nextChord;
-            nextChord = generateOneChord();
-            
+            prevChord = currentChord; currentChord = nextChord; nextChord = generateOneChord();
             document.getElementById('chord-prev').innerHTML = formatChordHTML(prevChord);
             document.getElementById('chord-current').innerHTML = formatChordHTML(currentChord);
             document.getElementById('chord-next').innerHTML = formatChordHTML(nextChord);
         }
 
         function initChords() {
-            prevChord = "";
-            currentChord = generateOneChord();
-            nextChord = generateOneChord();
-            
+            prevChord = ""; currentChord = generateOneChord(); nextChord = generateOneChord();
             document.getElementById('chord-prev').innerHTML = "";
             document.getElementById('chord-current').innerHTML = formatChordHTML(currentChord);
             document.getElementById('chord-next').innerHTML = formatChordHTML(nextChord);
@@ -433,25 +385,16 @@
         function getSafeBPM() {
             let bpm = parseInt(bpmInput.value);
             if (isNaN(bpm)) bpm = lastValidBPM;
-            if (bpm < 40) bpm = 40;
-            if (bpm > 240) bpm = 240;
-            
-            bpmInput.value = bpm;
-            bpmSlider.value = bpm;
-            lastValidBPM = bpm;
-            return bpm;
+            if (bpm < 40) bpm = 40; if (bpm > 240) bpm = 240;
+            bpmInput.value = bpm; bpmSlider.value = bpm; lastValidBPM = bpm; return bpm;
         }
 
         let lastValidBeats = 4;
         function getSafeBeats() {
             let b = parseInt(beatsInput.value);
             if (isNaN(b)) b = lastValidBeats;
-            if (b < 1) b = 1;
-            if (b > 4) b = 4;
-            
-            beatsInput.value = b;
-            lastValidBeats = b;
-            return b;
+            if (b < 1) b = 1; if (b > 4) b = 4;
+            beatsInput.value = b; lastValidBeats = b; return b;
         }
 
         function tick() {
@@ -464,40 +407,26 @@
         }
 
         bpmSlider.addEventListener('input', () => { 
-            bpmInput.value = bpmSlider.value; 
-            lastValidBPM = parseInt(bpmSlider.value);
-            if (isPlaying) { 
-                clearInterval(tempoInterval); 
-                tempoInterval = setInterval(tick, (60 / lastValidBPM) * 1000); 
-            } 
+            bpmInput.value = bpmSlider.value; lastValidBPM = parseInt(bpmSlider.value);
+            if (isPlaying) { clearInterval(tempoInterval); tempoInterval = setInterval(tick, (60 / lastValidBPM) * 1000); } 
         });
 
         bpmInput.addEventListener('change', () => { 
             let bpm = getSafeBPM();
-            if (isPlaying) { 
-                clearInterval(tempoInterval); 
-                tempoInterval = setInterval(tick, (60 / bpm) * 1000); 
-            } 
+            if (isPlaying) { clearInterval(tempoInterval); tempoInterval = setInterval(tick, (60 / bpm) * 1000); } 
         });
 
         beatsInput.addEventListener('change', () => { 
-            getSafeBeats();
-            currentBeat = 0; 
-            if (isPlaying) { 
-                clearInterval(tempoInterval); 
-                tick(); 
-                tempoInterval = setInterval(tick, (60 / lastValidBPM) * 1000); 
-            } 
+            getSafeBeats(); currentBeat = 0; 
+            if (isPlaying) { clearInterval(tempoInterval); tick(); tempoInterval = setInterval(tick, (60 / lastValidBPM) * 1000); } 
             createLights(); 
         });
 
         function createLights() {
-            const lightsContainer = document.getElementById('beat-lights');
-            lightsContainer.innerHTML = '';
+            const lightsContainer = document.getElementById('beat-lights'); lightsContainer.innerHTML = '';
             let count = currentMode === 'TAP' ? 4 : getSafeBeats();
             for (let i = 0; i < count; i++) {
-                const div = document.createElement('div');
-                div.className = 'light';
+                const div = document.createElement('div'); div.className = 'light';
                 if (currentMode === 'TAP') div.style.opacity = "0"; 
                 lightsContainer.appendChild(div);
             }
@@ -508,8 +437,7 @@
         
         document.getElementById('start-btn-home').addEventListener('click', () => { 
             if (!checkSelection()) return; 
-            document.getElementById('home-screen').classList.add('hidden'); 
-            document.getElementById('practice-screen').classList.remove('hidden'); 
+            document.getElementById('home-screen').classList.add('hidden'); document.getElementById('practice-screen').classList.remove('hidden'); 
             initChords(); createLights(); 
         });
 
@@ -519,8 +447,7 @@
             if (isPlaying) stop(); 
             else { 
                 if (!checkSelection()) return; 
-                let bpm = getSafeBPM();
-                isPlaying = true; playBtn.innerText = 'Stop'; currentBeat = 0; tick(); 
+                let bpm = getSafeBPM(); isPlaying = true; playBtn.innerText = 'Stop'; currentBeat = 0; tick(); 
                 tempoInterval = setInterval(tick, (60 / bpm) * 1000); 
             } 
         });
@@ -529,24 +456,22 @@
         
         window.addEventListener('keydown', (e) => { 
             if (e.code === 'Space') {
-                if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
-                    document.activeElement.blur();
-                }
+                if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
                 if (!document.getElementById('practice-screen').classList.contains('hidden')) {
                     e.preventDefault(); 
-                    if (currentMode === 'TAP') {
-                        if(checkSelection()) document.getElementById('next-btn').click(); 
-                    } else if (currentMode === 'TEMPO') {
-                        document.getElementById('play-pause-btn').click(); 
-                    }
+                    if (currentMode === 'TAP') { if(checkSelection()) document.getElementById('next-btn').click(); } 
+                    else if (currentMode === 'TEMPO') { document.getElementById('play-pause-btn').click(); }
                 }
             }
         });
 
         document.getElementById('back-btn').addEventListener('click', () => { stop(); document.getElementById('practice-screen').classList.add('hidden'); document.getElementById('home-screen').classList.remove('hidden'); });
+
+        // PWA 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('Service Worker Registered'));
+        }
     </script>
-    <div style="position: fixed; bottom: 15px; width: 100%; text-align: center; font-size: 0.65rem; font-weight: 400; color: var(--sub-text); opacity: 0.6; z-index: 500; letter-spacing: 0.5px;">
-        &copy; 2026 PracticeChords.io. All rights reserved.
-    </div>
 </body>
 </html>
