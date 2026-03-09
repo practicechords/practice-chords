@@ -40,20 +40,21 @@
             --selector-bg: rgba(0, 0, 0, 0.05);
         }
 
-        /* --- 💻 PC 버전 (원래 코드 완벽 복구: 건드리지 않음) --- */
+        /* --- 💻 공통 및 PC 버전 레이아웃 --- */
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* 핵심 1: 화면 위쪽부터 차곡차곡 쌓기 (중앙정렬 해제) */
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;           /* 핵심 2: 내용이 길어지면 화면도 알아서 늘어나게 */
             margin: 0;
             font-family: 'Montserrat', sans-serif;
             transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;            /* 핵심 3: 화면이 좁으면 무조건 세로 스크롤 생성! */
         }
 
         #top-logo {
