@@ -48,12 +48,13 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             font-family: 'Montserrat', sans-serif;
             transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         #top-logo {
@@ -155,10 +156,22 @@
             .setting-group { width: 90%; padding: 20px 15px; }
             .mode-content-wrapper { height: auto; min-height: 150px; }
         }
+        #top-bar-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 80px;
+            background-color: var(--bg-color);
+            z-index: 990; /* 로고와 버튼(1000) 바로 뒤에 배치 */
+            transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        
     </style>
 </head>
 <body>
-
+    <div id="top-bar-bg"></div> <div id="top-logo">PracticeChords.io</div>
+    
     <div id="top-logo">PracticeChords.io</div>
     <button class="theme-toggle" id="theme-btn">LIGHT MODE</button>
     
