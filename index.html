@@ -18,6 +18,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icon-192.png">
+    
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XDYJ3PLGCY"></script>
     <script>
@@ -294,7 +295,7 @@
         </div>
     </section>
 
-    <div style="position: absolute; bottom: 20px; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+    <div id="footer-area" style="position: absolute; bottom: 20px; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">
         <p style="font-size: 0.75rem; color: var(--sub-text); opacity: 0.7; max-width: 800px; margin: 0; line-height: 1.4; padding: 0 20px;">
             PracticeChords.io is a chord sight-reading trainer. Practice chords to improve your sight-reading and music theory skills.
         </p>
@@ -501,6 +502,26 @@
             navigator.serviceWorker.register('/sw.js')
                 .then(() => console.log('Service Worker Registered'));
         }
+
+        // --- 화면 빈 공간 클릭 시 작동 ---
+document.addEventListener('click', (e) => {
+    // 1. 연습 화면이 아닐 때(홈 화면일 때)는 무시합니다.
+    if (document.getElementById('practice-screen').classList.contains('hidden')) return;
+
+    // 2. 클릭한 곳이 '조작부'인지 확인합니다. (매우 중요!)
+    // 만약 버튼, BPM 입력창, 필터 패널, 상단 로고 등을 클릭했을 때는 코드가 넘어가면 안 되므로 방지합니다.
+    const isInteractiveElement = e.target.closest('button, input, a, #filter-panel, .mode-selector, #top-logo, #top-bar-bg, .setting-group, #footer-area');
+    if (isInteractiveElement) return;
+
+    // 3. 빈 공간을 클릭했다면, 현재 모드에 맞게 실행합니다.
+    // 기존에 만들어두신 스페이스바 이벤트와 동일한 원리입니다.
+    if (currentMode === 'TAP') {
+        if (checkSelection()) document.getElementById('next-btn').click();
+    } else if (currentMode === 'TEMPO') {
+        // TEMPO 모드에서는 플레이/정지 토글
+        document.getElementById('play-pause-btn').click();
+    }
+});
     </script>
 </body>
 </html>
