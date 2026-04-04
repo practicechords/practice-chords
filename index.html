@@ -187,6 +187,7 @@
     
     <div id="top-logo">PracticeChords.io</div>
     <button class="theme-toggle" id="theme-btn">LIGHT MODE</button>
+    <button class="theme-toggle" id="login-btn" onclick="handleAuth()" style="right: 190px;">LOGIN</button>
     
     <section id="home-screen">
         <h1>PracticeChords.io</h1>
@@ -524,5 +525,54 @@ document.addEventListener('click', (e) => {
     }
 });
     </script>
+    <script type="module">
+  // 1. 필요한 Firebase 라이브러리 불러오기
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  // 2. 본인의 Firebase 설정 (스크린샷 내용 반영)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCk7MXi47DNq7K7PhFIr5BT4uBwC39N_h8",
+    authDomain: "practice-chords.firebaseapp.com",
+    projectId: "practice-chords",
+    storageBucket: "practice-chords.firebasestorage.app",
+    messagingSenderId: "823815682850",
+    appId: "1:823815682850:web:4097954afe623c7671437b",
+    measurementId: "G-GDNV4ZCVQ4"
+  };
+
+  // 3. Firebase 초기화
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  // 4. 구글 로그인/로그아웃 함수 (HTML에서 쓸 수 있게 window 객체에 등록)
+  window.handleAuth = () => {
+    if (!auth.currentUser) {
+      // 로그인 안 된 상태면 팝업 띄우기
+      signInWithPopup(auth, provider)
+        .then((result) => console.log("로그인 성공!"))
+        .catch((error) => console.error("로그인 에러:", error));
+    } else {
+      // 로그인 된 상태면 로그아웃
+      signOut(auth).then(() => alert("로그아웃 되었습니다."));
+    }
+  };
+
+  // 5. 로그인 상태 감시 (로그인 상태에 따라 버튼 글자 바꾸기)
+  const loginBtn = document.getElementById('login-btn');
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // 로그인 성공 시: 유저 이름의 첫 글자나 'LOGOUT' 표시
+      loginBtn.innerText = `${user.displayName.split(' ')[0]} (OUT)`;
+      console.log("현재 유저:", user.uid); // 이 UID를 나중에 DB 저장할 때 씁니다.
+    } else {
+      // 로그아웃 상태 시
+      loginBtn.innerText = "LOGIN";
+    }
+  });
+</script>
 </body>
 </html>
