@@ -187,7 +187,7 @@
     
     <div id="top-logo">PracticeChords.io</div>
     <button class="theme-toggle" id="theme-btn">LIGHT MODE</button>
-    <button class="theme-toggle" id="login-btn" onclick="handleAuth()" style="right: 190px;">LOGIN</button>
+    <button class="theme-toggle" id="signin-btn" onclick="handleAuth()" style="right: 190px;">SIGN IN</button>
     
     <section id="home-screen">
         <h1>PracticeChords.io</h1>
@@ -553,24 +553,24 @@ document.addEventListener('click', (e) => {
     if (!auth.currentUser) {
       // 로그인 안 된 상태면 팝업 띄우기
       signInWithPopup(auth, provider)
-        .then((result) => console.log("Login successful!"))
-        .catch((error) => console.error("Login error:", error));
+        .then((result) => console.log("Signed in successfully!"))
+        .catch((error) => console.error("Sign-in failed.:", error));
     } else {
       // 로그인 된 상태면 로그아웃
-      signOut(auth).then(() => alert("Logged out successfully."));
+      signOut(auth).then(() => alert("Signed out successfully."));
     }
   };
 
   // 5. 로그인 상태 감시 (로그인 상태에 따라 버튼 글자 바꾸기)
-  const loginBtn = document.getElementById('login-btn');
+  const signinBtn = document.getElementById('signin-btn');
   onAuthStateChanged(auth, (user) => {
     if (user) {
       // 로그인 성공 시: 유저 이름의 첫 글자나 'LOGOUT' 표시
-      loginBtn.innerText = `${user.displayName.split(' ')[0]} (OUT)`;
+      signinBtn.innerText = `${user.displayName.split(' ')[0]} (OUT)`;
       console.log("현재 유저:", user.uid); // 이 UID를 나중에 DB 저장할 때 씁니다.
     } else {
       // 로그아웃 상태 시
-      loginBtn.innerText = "LOGIN";
+      signinBtn.innerText = "SIGNIN";
     }
   });
 </script>
