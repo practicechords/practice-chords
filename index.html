@@ -609,7 +609,7 @@ document.addEventListener('click', (e) => {
   onAuthStateChanged(auth, (user) => {
     if (user) {
       // 로그인 성공 시
-      signinBtn.innerText = `${user.displayName.split(' ')[0]} (OUT)`;
+      signinBtn.innerText = `${user.displayName.split(' ')[0]} (SIGN OUT)`;
       updateActivityTime(); // 타이머 시작
     } else {
       // 로그아웃 상태 시
