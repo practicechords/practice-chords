@@ -553,11 +553,11 @@ document.addEventListener('click', (e) => {
     if (!auth.currentUser) {
       // 로그인 안 된 상태면 팝업 띄우기
       signInWithPopup(auth, provider)
-        .then((result) => console.log("로그인 성공!"))
-        .catch((error) => console.error("로그인 에러:", error));
+        .then((result) => console.log("Login successful!"))
+        .catch((error) => console.error("Login error:", error));
     } else {
       // 로그인 된 상태면 로그아웃
-      signOut(auth).then(() => alert("로그아웃 되었습니다."));
+      signOut(auth).then(() => alert("Logged out successfully."));
     }
   };
 
