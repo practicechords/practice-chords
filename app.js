@@ -88,11 +88,11 @@ function getCurrentSettings() {
     document.querySelectorAll('.chord-pill.active[data-val]').forEach(p => {
         selectedTypes.push(p.getAttribute('data-val'));
     });
-    // 🚀 Firestore는 빈 문자열 키를 거부하므로 '' → '__M__' 로 인코딩해서 저장
-    // (메이저 트라이어드는 내부적으로 빈 문자열 '' 로 표현됨)
+    // 🚀 Firestore는 빈 문자열 키 및 '__ 로 시작/끝나는' 키를 거부하므로
+    //    '' → 'M' 으로 인코딩해서 저장 (메이저 트라이어드는 내부적으로 '' 로 표현됨)
     const weightsForSave = {};
     Object.keys(chordWeights).forEach(key => {
-        const safeKey = key === '' ? '__M__' : key;
+        const safeKey = key === '' ? 'M' : key;
         weightsForSave[safeKey] = chordWeights[key];
     });
     return {
@@ -116,10 +116,10 @@ window.addEventListener('user-settings-loaded', (e) => {
     suppressSave = true;
     try {
         // 1) 가중치 복원 (기본값 구조를 유지한 채 값만 덮어씀)
-        //    저장 시 '' → '__M__' 로 인코딩됐으므로 복원 시 역변환
+        //    저장 시 '' → 'M' 으로 인코딩됐으므로 복원 시 역변환
         if (settings.chordWeights && typeof settings.chordWeights === 'object') {
             Object.keys(settings.chordWeights).forEach(key => {
-                const realKey = key === '__M__' ? '' : key;
+                const realKey = key === 'M' ? '' : key;
                 if (realKey in chordWeights) {
                     chordWeights[realKey] = settings.chordWeights[key];
                 }
