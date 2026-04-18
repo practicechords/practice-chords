@@ -42,6 +42,7 @@
         <h1>PracticeChords.io</h1>
         <p>Master your chord sight-reading</p>
         <button class="start-btn" id="start-btn-home">Start Practice</button>
+        <button class="start-btn" id="voicing-btn-home" style="margin-top: 15px; background: transparent; color: var(--text-color); border: 2px solid var(--text-color); box-shadow: none;">Voicing Library</button>
     </section>
 
     <section id="practice-screen" class="hidden">
@@ -172,6 +173,78 @@
             </div>
             <button id="back-btn">Back to Home</button>
         </div>
+    </section>
+
+    <section id="voicing-screen" class="hidden">
+        <h2 style="font-size: 2rem; margin-bottom: 5px;">Voicing Library</h2>
+        <p style="font-size: 0.9rem; color: var(--sub-text); margin-bottom: 20px;">Build your personal voicing vocabulary across all keys</p>
+
+        <!-- 퀄리티 + 루트 선택 -->
+        <div id="voicing-selectors">
+            <div class="voicing-selector-group">
+                <span class="voicing-selector-label">Chord Quality</span>
+                <div class="chord-pills" id="voicing-quality-pills">
+                    <div class="chord-pill active" data-val="">M</div>
+                    <div class="chord-pill" data-val="m">m</div>
+                    <div class="chord-pill" data-val="dim">dim</div>
+                    <div class="chord-pill" data-val="aug">aug</div>
+                    <div class="chord-pill" data-val="sus4">sus4</div>
+                    <div class="chord-pill" data-val="maj7">maj7</div>
+                    <div class="chord-pill" data-val="7">7</div>
+                    <div class="chord-pill" data-val="m7">m7</div>
+                    <div class="chord-pill" data-val="m7b5">m7(b5)</div>
+                    <div class="chord-pill" data-val="dim7">dim7</div>
+                    <div class="chord-pill" data-val="7sus4">7sus4</div>
+                    <div class="chord-pill" data-val="mM7">mM7</div>
+                    <div class="chord-pill" data-val="maj9">maj9</div>
+                    <div class="chord-pill" data-val="m9">m9</div>
+                    <div class="chord-pill" data-val="m11">m11</div>
+                    <div class="chord-pill" data-val="9">9</div>
+                    <div class="chord-pill" data-val="13">13</div>
+                    <div class="chord-pill" data-val="7(b9)">7(b9)</div>
+                    <div class="chord-pill" data-val="7(#9)">7(#9)</div>
+                    <div class="chord-pill" data-val="7alt">7alt</div>
+                </div>
+            </div>
+
+            <div class="voicing-selector-group">
+                <span class="voicing-selector-label">Root (display key)</span>
+                <div class="chord-pills" id="voicing-root-pills">
+                    <div class="chord-pill active" data-semitone="0">C</div>
+                    <div class="chord-pill" data-semitone="1">C#/Db</div>
+                    <div class="chord-pill" data-semitone="2">D</div>
+                    <div class="chord-pill" data-semitone="3">D#/Eb</div>
+                    <div class="chord-pill" data-semitone="4">E</div>
+                    <div class="chord-pill" data-semitone="5">F</div>
+                    <div class="chord-pill" data-semitone="6">F#/Gb</div>
+                    <div class="chord-pill" data-semitone="7">G</div>
+                    <div class="chord-pill" data-semitone="8">G#/Ab</div>
+                    <div class="chord-pill" data-semitone="9">A</div>
+                    <div class="chord-pill" data-semitone="10">A#/Bb</div>
+                    <div class="chord-pill" data-semitone="11">B</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 현재 편집 중인 코드 레이블 -->
+        <div id="voicing-current-label" style="font-size: 2.5rem; font-weight: 700; margin: 20px 0 10px 0;">C</div>
+
+        <!-- 가상 건반 -->
+        <div id="piano-keyboard"></div>
+
+        <!-- 액션 버튼들 -->
+        <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center;">
+            <button class="start-btn" id="voicing-save-btn" style="padding: 12px 30px; font-size: 0.95rem;">Save Voicing</button>
+            <button class="start-btn" id="voicing-clear-btn" style="padding: 12px 30px; font-size: 0.95rem; background: transparent; color: var(--text-color); border: 2px solid var(--sub-text); box-shadow: none;">Clear Keyboard</button>
+        </div>
+
+        <!-- 저장된 보이싱 리스트 -->
+        <div id="voicing-library-section" style="width: 90%; max-width: 900px; margin-top: 40px;">
+            <h3 style="font-size: 1.1rem; color: var(--sub-text); text-align: left; margin-bottom: 12px; letter-spacing: 1px;">SAVED VOICINGS</h3>
+            <div id="voicing-list"></div>
+        </div>
+
+        <button id="voicing-back-btn" style="margin-top: 30px; background: none; border: none; color: var(--sub-text); cursor: pointer; text-decoration: underline; font-family: 'Montserrat', sans-serif;">Back to Home</button>
     </section>
 
     <div id="footer-area" style="width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;">

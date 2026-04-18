@@ -208,3 +208,142 @@ input[type="number"] { background: rgba(125, 125, 125, 0.1); border: 1px solid v
     z-index: 990; /* 로고와 버튼(1000) 바로 뒤에 배치 */
     transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* =============================================================== */
+/* 🎹 보이싱 라이브러리 화면 */
+/* =============================================================== */
+
+/* 퀄리티/루트 셀렉터 영역 */
+#voicing-selectors {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: var(--selector-bg);
+    padding: 20px 25px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 900px;
+    text-align: left;
+}
+.voicing-selector-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.voicing-selector-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--sub-text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 루트 pill은 single select (기존 .active 스타일 재사용) */
+#voicing-root-pills .chord-pill,
+#voicing-quality-pills .chord-pill {
+    user-select: none;
+}
+
+/* 가상 건반 */
+#piano-keyboard {
+    position: relative;
+    width: 90%;
+    max-width: 900px;
+    height: 150px;
+    margin: 20px 0 10px 0;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+}
+.piano-keys {
+    position: relative;
+    display: flex;
+    height: 100%;
+}
+.piano-key {
+    box-sizing: border-box;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.1s ease;
+}
+.piano-key.white {
+    width: 32px;
+    height: 100%;
+    background: #ffffff;
+    border: 1px solid #333;
+    border-radius: 0 0 4px 4px;
+    position: relative;
+    z-index: 1;
+}
+.piano-key.black {
+    position: absolute;
+    width: 20px;
+    height: 60%;
+    background: #111;
+    border: 1px solid #000;
+    border-radius: 0 0 3px 3px;
+    z-index: 2;
+    top: 0;
+}
+.piano-key.white.active { background: #4a90e2; }
+.piano-key.black.active { background: #2a6ac0; }
+.piano-key.white.root { background: #ff6b6b; }
+.piano-key.black.root { background: #c44; }
+.piano-key.white.active.root { background: #d94040; }
+.piano-key.black.active.root { background: #a82828; }
+
+/* 저장된 보이싱 리스트 */
+#voicing-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.voicing-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--selector-bg);
+    padding: 12px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.voicing-row:hover { background: rgba(125,125,125,0.25); }
+.voicing-row.active { background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; }
+.voicing-row-notes {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-color);
+    letter-spacing: 1px;
+}
+.voicing-row-meta {
+    font-size: 0.7rem;
+    color: var(--sub-text);
+}
+.voicing-delete-btn {
+    background: none;
+    border: none;
+    color: var(--sub-text);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.voicing-delete-btn:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
+
+#voicing-empty-msg {
+    color: var(--sub-text);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* 모바일: 건반 크기 축소 */
+@media (max-width: 850px) {
+    #piano-keyboard { height: 110px; overflow-x: auto; }
+    .piano-key.white { width: 24px; }
+    .piano-key.black { width: 15px; }
+}

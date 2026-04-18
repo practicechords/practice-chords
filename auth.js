@@ -8,7 +8,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, addDoc, getDocs, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 2. 본인의 Firebase 설정
 const firebaseConfig = {
@@ -61,6 +61,51 @@ const loadAndDispatchSettings = async (uid) => {
     } catch (error) {
         console.error("Failed to load settings:", error);
     }
+};
+
+// =====================================================================
+// 🎹 보이싱 라이브러리 Firestore 함수들
+// 저장 경로: users/{uid}/voicings/{voicingId}
+// 문서 형태: { chordQuality: "m7", intervals: [0,3,7,10], createdAt: timestamp }
+// =====================================================================
+
+window.saveVoicing = async (voicing) => {
+    if (!auth.currentUser) throw new Error("Not signed in");
+    const voicingsCol = collection(db, "users", auth.currentUser.uid, "voicings");
+    await addDoc(voicingsCol, {
+        chordQuality: voicing.chordQuality,
+        intervals: voicing.intervals,
+        createdAt: serverTimestamp()
+    });
+};
+
+window.loadVoicings = async (chordQuality) => {
+    if (!auth.currentUser) return [];
+    const voicingsCol = collection(db, "users", auth.currentUser.uid, "voicings");
+    // chordQuality로 필터 + 최신순 정렬
+    const q = query(voicingsCol, where("chordQuality", "==", chordQuality), orderBy("createdAt", "desc"));
+    try {
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+        // orderBy + where 조합은 복합 인덱스가 필요할 수 있음 — fallback: 필터만 하고 클라이언트에서 정렬
+        console.warn("Voicings query with orderBy failed, falling back:", err);
+        const q2 = query(voicingsCol, where("chordQuality", "==", chordQuality));
+        const snap2 = await getDocs(q2);
+        const rows = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+        rows.sort((a, b) => {
+            const at = a.createdAt?.seconds || 0;
+            const bt = b.createdAt?.seconds || 0;
+            return bt - at; // 최신순
+        });
+        return rows;
+    }
+};
+
+window.deleteVoicing = async (voicingId) => {
+    if (!auth.currentUser) throw new Error("Not signed in");
+    const docRef = doc(db, "users", auth.currentUser.uid, "voicings", voicingId);
+    await deleteDoc(docRef);
 };
 // =====================================================================
 

@@ -12,6 +12,7 @@ themeBtn.addEventListener('click', () => {
 document.getElementById('top-logo').addEventListener('click', () => {
     stop();
     document.getElementById('practice-screen').classList.add('hidden');
+    document.getElementById('voicing-screen').classList.add('hidden');
     document.getElementById('home-screen').classList.remove('hidden');
 });
 
@@ -463,6 +464,327 @@ document.addEventListener('click', (e) => {
 });
 
 document.getElementById('back-btn').addEventListener('click', () => { stop(); document.getElementById('practice-screen').classList.add('hidden'); document.getElementById('home-screen').classList.remove('hidden'); });
+
+// =====================================================================
+// 🎹 보이싱 라이브러리 (Voicing Library)
+// =====================================================================
+// 핵심 아이디어: 보이싱을 "루트로부터의 반음 간격"으로 저장하면 어떤 키로든 이동 가능.
+//   예) Cm7에서 C-Eb-G-Bb-D 친 보이싱 → intervals: [0, 3, 7, 10, 14]
+//   Ab로 옮겨 치고 싶을 때: 루트만 Ab로 바꾸면 자동으로 음이 재배치됨.
+
+// --- 상수 정의 ---
+const KEYBOARD_START_MIDI = 48;  // C3
+const KEYBOARD_END_MIDI = 84;    // C6 (3옥타브 + 1)
+const NOTE_NAMES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const NOTE_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+// 루트별 선호 표기 (b 쓰는 키 / # 쓰는 키 구분 — 간단 버전)
+const FLAT_ROOTS = [1, 3, 5, 6, 8, 10]; // Db, Eb, F, Gb, Ab, Bb 쪽은 b 표기
+
+// 현재 편집 상태
+let voicingSelectedQuality = '';     // 기본 M
+let voicingRootSemitone = 0;         // 기본 C
+let voicingActiveMidiNotes = new Set(); // 건반에서 눌린 MIDI 번호들
+let cachedVoicings = [];             // 현재 퀄리티의 저장된 보이싱 목록
+
+// --- 건반 생성 ---
+function buildPianoKeyboard() {
+    const kbEl = document.getElementById('piano-keyboard');
+    if (!kbEl) return;
+    kbEl.innerHTML = '';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'piano-keys';
+
+    // 흰건반 먼저 깔고, 검은건반은 absolute로 위에 얹음
+    const whiteKeyIndexesInOctave = [0, 2, 4, 5, 7, 9, 11]; // C D E F G A B
+    const blackKeyIndexesInOctave = [1, 3, 6, 8, 10];       // C# D# F# G# A#
+
+    // 흰건반 카운터 (검은건반 위치 계산용)
+    let whiteCount = 0;
+    const whiteKeyWidth = window.innerWidth <= 850 ? 24 : 32;
+    const blackKeyWidth = window.innerWidth <= 850 ? 15 : 20;
+
+    // 흰건반 렌더
+    for (let midi = KEYBOARD_START_MIDI; midi <= KEYBOARD_END_MIDI; midi++) {
+        const noteIdx = midi % 12;
+        if (!whiteKeyIndexesInOctave.includes(noteIdx)) continue;
+        const key = document.createElement('div');
+        key.className = 'piano-key white';
+        key.dataset.midi = midi;
+        wrapper.appendChild(key);
+        whiteCount++;
+    }
+
+    // 검은건반 렌더 (흰건반 사이에 올림)
+    // 각 흰건반의 left 위치를 기반으로 계산
+    let whiteIdx = 0;
+    for (let midi = KEYBOARD_START_MIDI; midi <= KEYBOARD_END_MIDI; midi++) {
+        const noteIdx = midi % 12;
+        if (whiteKeyIndexesInOctave.includes(noteIdx)) {
+            whiteIdx++;
+            continue;
+        }
+        // 검은건반 — 직전 흰건반 오른쪽 끝에서 살짝 왼쪽에 배치
+        const key = document.createElement('div');
+        key.className = 'piano-key black';
+        key.dataset.midi = midi;
+        // 직전 흰건반이 whiteIdx-1 번째. 그 오른쪽 경계는 whiteIdx * whiteKeyWidth
+        const leftPos = whiteIdx * whiteKeyWidth - (blackKeyWidth / 2);
+        key.style.left = leftPos + 'px';
+        wrapper.appendChild(key);
+    }
+
+    kbEl.appendChild(wrapper);
+
+    // 클릭 이벤트 (이벤트 위임)
+    wrapper.addEventListener('click', (e) => {
+        const key = e.target.closest('.piano-key');
+        if (!key) return;
+        const midi = parseInt(key.dataset.midi);
+        if (voicingActiveMidiNotes.has(midi)) {
+            voicingActiveMidiNotes.delete(midi);
+        } else {
+            voicingActiveMidiNotes.add(midi);
+        }
+        refreshKeyboardVisual();
+    });
+}
+
+// 건반 하이라이트 갱신 (active 노트 + 루트 표시)
+function refreshKeyboardVisual() {
+    document.querySelectorAll('#piano-keyboard .piano-key').forEach(key => {
+        const midi = parseInt(key.dataset.midi);
+        key.classList.toggle('active', voicingActiveMidiNotes.has(midi));
+        // 루트 표시: 해당 semitone이 voicingRootSemitone과 같으면 .root
+        key.classList.toggle('root', (midi % 12) === voicingRootSemitone);
+    });
+}
+
+// 루트 pill / 퀄리티 pill 선택 UI
+function setupVoicingPills() {
+    // 퀄리티 pill — 싱글 셀렉트
+    document.querySelectorAll('#voicing-quality-pills .chord-pill').forEach(p => {
+        p.addEventListener('click', () => {
+            document.querySelectorAll('#voicing-quality-pills .chord-pill').forEach(x => x.classList.remove('active'));
+            p.classList.add('active');
+            voicingSelectedQuality = p.getAttribute('data-val');
+            updateVoicingLabel();
+            loadVoicingsForCurrentQuality();
+        });
+    });
+    // 루트 pill — 싱글 셀렉트
+    document.querySelectorAll('#voicing-root-pills .chord-pill').forEach(p => {
+        p.addEventListener('click', () => {
+            document.querySelectorAll('#voicing-root-pills .chord-pill').forEach(x => x.classList.remove('active'));
+            p.classList.add('active');
+            voicingRootSemitone = parseInt(p.getAttribute('data-semitone'));
+            updateVoicingLabel();
+            refreshKeyboardVisual();
+            // 루트 바뀌면 현재 건반 선택을 비우고 재시작 (혼동 방지)
+            voicingActiveMidiNotes.clear();
+            refreshKeyboardVisual();
+            // 선택된 보이싱이 있었다면 다시 하이라이트 (루트 기준으로 재계산)
+            highlightSelectedVoicingIfAny();
+        });
+    });
+}
+
+function updateVoicingLabel() {
+    const rootName = FLAT_ROOTS.includes(voicingRootSemitone)
+        ? NOTE_NAMES_FLAT[voicingRootSemitone]
+        : NOTE_NAMES_SHARP[voicingRootSemitone];
+    const suffix = toDisplayType(voicingSelectedQuality);
+    document.getElementById('voicing-current-label').innerHTML = formatChordHTML(rootName.replace('b', 'b').replace('#', '#') + suffix);
+}
+
+// MIDI → 노트 이름 ("C4", "Eb5" 등)
+function midiToNoteName(midi) {
+    const noteIdx = midi % 12;
+    const octave = Math.floor(midi / 12) - 1;
+    const useFlat = FLAT_ROOTS.includes(voicingRootSemitone);
+    const name = useFlat ? NOTE_NAMES_FLAT[noteIdx] : NOTE_NAMES_SHARP[noteIdx];
+    return name + octave;
+}
+
+// 현재 건반 active 노트들을 → 루트 기준 interval 배열로 변환
+function currentVoicingToIntervals() {
+    // 루트 MIDI: 건반 범위 내 가장 낮은 루트음 (예: 루트가 C면 C3=48)
+    // 그냥 가장 낮은 active 노트 기준으로 % 12 돌려 루트 찾아도 되지만,
+    // 저장 규칙: "루트 음(semitone 기준)에서 실제 눌린 각 음까지 반음 거리" 로 통일.
+    // 즉 루트 semitone의 가장 낮은 옥타브(voicingRootSemitone + 48 if >= 48)를 기준점으로 삼음.
+    if (voicingActiveMidiNotes.size === 0) return [];
+    const sortedNotes = [...voicingActiveMidiNotes].sort((a, b) => a - b);
+    // 루트 기준: 가장 낮은 노트의 옥타브에서 "루트 semitone"을 찾음
+    const lowestMidi = sortedNotes[0];
+    // 루트 기준점: lowestMidi 이하에서 가장 가까운 voicingRootSemitone 위치
+    let rootMidi = Math.floor(lowestMidi / 12) * 12 + voicingRootSemitone;
+    if (rootMidi > lowestMidi) rootMidi -= 12;
+    return sortedNotes.map(m => m - rootMidi);
+}
+
+// interval 배열 + 현재 루트 → 건반에 표시할 MIDI 배열
+function intervalsToMidiNotes(intervals) {
+    if (!Array.isArray(intervals) || intervals.length === 0) return [];
+    // 기본 루트 위치: C3~C4 사이. 루트 semitone을 C3(48) 위로 올림 — 단, 너무 낮으면 한 옥타브 올림
+    let baseRootMidi = 48 + voicingRootSemitone; // C3 + semitone
+    const maxInterval = Math.max(...intervals);
+    const minInterval = Math.min(...intervals);
+    // 건반 범위 벗어나면 옥타브 조정
+    while (baseRootMidi + maxInterval > KEYBOARD_END_MIDI && baseRootMidi >= 36) {
+        baseRootMidi -= 12;
+    }
+    while (baseRootMidi + minInterval < KEYBOARD_START_MIDI && baseRootMidi <= 72) {
+        baseRootMidi += 12;
+    }
+    return intervals.map(iv => baseRootMidi + iv);
+}
+
+// interval 배열을 "C Eb G Bb D" 같은 노트 이름 문자열로
+function intervalsToNoteNamesStr(intervals) {
+    const midiNotes = intervalsToMidiNotes(intervals);
+    return midiNotes.map(m => {
+        const noteIdx = m % 12;
+        const useFlat = FLAT_ROOTS.includes(voicingRootSemitone);
+        return useFlat ? NOTE_NAMES_FLAT[noteIdx] : NOTE_NAMES_SHARP[noteIdx];
+    }).join(' ');
+}
+
+// --- 저장/불러오기/삭제 (Firestore 호출 — auth.js가 함수 제공) ---
+async function saveCurrentVoicing() {
+    if (voicingActiveMidiNotes.size === 0) {
+        alert('Click some notes on the keyboard first!');
+        return;
+    }
+    if (typeof window.saveVoicing !== 'function') {
+        alert('Please sign in to save voicings.');
+        return;
+    }
+    const intervals = currentVoicingToIntervals();
+    try {
+        await window.saveVoicing({
+            chordQuality: voicingSelectedQuality,
+            intervals
+        });
+        await loadVoicingsForCurrentQuality();
+    } catch (err) {
+        console.error('Save voicing failed:', err);
+        alert('Failed to save voicing. Check console.');
+    }
+}
+
+async function loadVoicingsForCurrentQuality() {
+    if (typeof window.loadVoicings !== 'function') {
+        cachedVoicings = [];
+        renderVoicingList();
+        return;
+    }
+    try {
+        cachedVoicings = await window.loadVoicings(voicingSelectedQuality);
+        renderVoicingList();
+    } catch (err) {
+        console.error('Load voicings failed:', err);
+        cachedVoicings = [];
+        renderVoicingList();
+    }
+}
+
+async function deleteVoicing(voicingId) {
+    if (typeof window.deleteVoicing !== 'function') return;
+    if (!confirm('Delete this voicing?')) return;
+    try {
+        await window.deleteVoicing(voicingId);
+        await loadVoicingsForCurrentQuality();
+    } catch (err) {
+        console.error('Delete voicing failed:', err);
+    }
+}
+
+// 리스트 렌더
+let currentlyHighlightedVoicingId = null;
+function renderVoicingList() {
+    const listEl = document.getElementById('voicing-list');
+    listEl.innerHTML = '';
+
+    if (!cachedVoicings || cachedVoicings.length === 0) {
+        const empty = document.createElement('div');
+        empty.id = 'voicing-empty-msg';
+        empty.innerText = typeof window.saveVoicing !== 'function'
+            ? 'Sign in to save and view your voicings.'
+            : 'No voicings saved for this quality yet. Click notes on the keyboard and hit Save.';
+        listEl.appendChild(empty);
+        return;
+    }
+
+    cachedVoicings.forEach(v => {
+        const row = document.createElement('div');
+        row.className = 'voicing-row';
+        if (v.id === currentlyHighlightedVoicingId) row.classList.add('active');
+        row.innerHTML = `
+            <div>
+                <div class="voicing-row-notes">${intervalsToNoteNamesStr(v.intervals)}</div>
+                <div class="voicing-row-meta">${v.intervals.length} notes · intervals [${v.intervals.join(', ')}]</div>
+            </div>
+            <button class="voicing-delete-btn" data-id="${v.id}" title="Delete">🗑</button>
+        `;
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('.voicing-delete-btn')) return;
+            currentlyHighlightedVoicingId = v.id;
+            voicingActiveMidiNotes = new Set(intervalsToMidiNotes(v.intervals));
+            refreshKeyboardVisual();
+            renderVoicingList(); // active row 표시 갱신
+        });
+        const delBtn = row.querySelector('.voicing-delete-btn');
+        delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteVoicing(v.id);
+        });
+        listEl.appendChild(row);
+    });
+}
+
+function highlightSelectedVoicingIfAny() {
+    if (!currentlyHighlightedVoicingId) return;
+    const v = cachedVoicings.find(x => x.id === currentlyHighlightedVoicingId);
+    if (!v) return;
+    voicingActiveMidiNotes = new Set(intervalsToMidiNotes(v.intervals));
+    refreshKeyboardVisual();
+}
+
+// --- 화면 전환 ---
+document.getElementById('voicing-btn-home').addEventListener('click', () => {
+    document.getElementById('home-screen').classList.add('hidden');
+    document.getElementById('voicing-screen').classList.remove('hidden');
+    buildPianoKeyboard();
+    refreshKeyboardVisual();
+    updateVoicingLabel();
+    loadVoicingsForCurrentQuality();
+});
+
+document.getElementById('voicing-back-btn').addEventListener('click', () => {
+    document.getElementById('voicing-screen').classList.add('hidden');
+    document.getElementById('home-screen').classList.remove('hidden');
+});
+
+// --- 버튼 이벤트 ---
+document.getElementById('voicing-save-btn').addEventListener('click', saveCurrentVoicing);
+document.getElementById('voicing-clear-btn').addEventListener('click', () => {
+    voicingActiveMidiNotes.clear();
+    currentlyHighlightedVoicingId = null;
+    refreshKeyboardVisual();
+    renderVoicingList();
+});
+
+// --- 초기화 ---
+setupVoicingPills();
+
+// 로그인 상태 바뀌면 리스트 다시 로드
+window.addEventListener('user-settings-loaded', () => {
+    if (!document.getElementById('voicing-screen').classList.contains('hidden')) {
+        loadVoicingsForCurrentQuality();
+    }
+});
+
+// =====================================================================
 
 // PWA 서비스 워커 등록
 if ('serviceWorker' in navigator) {
