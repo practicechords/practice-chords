@@ -550,13 +550,11 @@ function buildPianoKeyboard() {
     });
 }
 
-// 건반 하이라이트 갱신 (active 노트 + 루트 표시)
+// 건반 하이라이트 갱신 (active 노트만)
 function refreshKeyboardVisual() {
     document.querySelectorAll('#piano-keyboard .piano-key').forEach(key => {
         const midi = parseInt(key.dataset.midi);
         key.classList.toggle('active', voicingActiveMidiNotes.has(midi));
-        // 루트 표시: 해당 semitone이 voicingRootSemitone과 같으면 .root
-        key.classList.toggle('root', (midi % 12) === voicingRootSemitone);
     });
 }
 
@@ -693,9 +691,17 @@ async function deleteVoicing(voicingId) {
     if (!confirm('Delete this voicing?')) return;
     try {
         await window.deleteVoicing(voicingId);
-        await loadVoicingsForCurrentQuality();
+        // 🚀 Firestore 재조회 대신 로컬 배열에서 즉시 제거 (UI 바로 갱신)
+        cachedVoicings = cachedVoicings.filter(v => v.id !== voicingId);
+        if (currentlyHighlightedVoicingId === voicingId) {
+            currentlyHighlightedVoicingId = null;
+            voicingActiveMidiNotes.clear();
+            refreshKeyboardVisual();
+        }
+        renderVoicingList();
     } catch (err) {
         console.error('Delete voicing failed:', err);
+        alert('Failed to delete. Check console.');
     }
 }
 
@@ -715,14 +721,24 @@ function renderVoicingList() {
         return;
     }
 
+    // 현재 선택된 루트 이름 (라벨용)
+    const rootName = FLAT_ROOTS.includes(voicingRootSemitone)
+        ? NOTE_NAMES_FLAT[voicingRootSemitone]
+        : NOTE_NAMES_SHARP[voicingRootSemitone];
+    const qualitySuffix = toDisplayType(voicingSelectedQuality);
+    const chordLabel = rootName + qualitySuffix;
+
     cachedVoicings.forEach(v => {
         const row = document.createElement('div');
         row.className = 'voicing-row';
         if (v.id === currentlyHighlightedVoicingId) row.classList.add('active');
         row.innerHTML = `
-            <div>
-                <div class="voicing-row-notes">${intervalsToNoteNamesStr(v.intervals)}</div>
-                <div class="voicing-row-meta">${v.intervals.length} notes · intervals [${v.intervals.join(', ')}]</div>
+            <div style="display: flex; align-items: center; gap: 20px; flex: 1;">
+                <div class="voicing-row-chord">${chordLabel}</div>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <div class="voicing-row-notes">${intervalsToNoteNamesStr(v.intervals)}</div>
+                    <div class="voicing-row-meta">${v.intervals.length} notes · intervals [${v.intervals.join(', ')}]</div>
+                </div>
             </div>
             <button class="voicing-delete-btn" data-id="${v.id}" title="Delete">🗑</button>
         `;

@@ -287,10 +287,6 @@ input[type="number"] { background: rgba(125, 125, 125, 0.1); border: 1px solid v
 }
 .piano-key.white.active { background: #4a90e2; }
 .piano-key.black.active { background: #2a6ac0; }
-.piano-key.white.root { background: #ff6b6b; }
-.piano-key.black.root { background: #c44; }
-.piano-key.white.active.root { background: #d94040; }
-.piano-key.black.active.root { background: #a82828; }
 
 /* 저장된 보이싱 리스트 */
 #voicing-list {
@@ -310,6 +306,14 @@ input[type="number"] { background: rgba(125, 125, 125, 0.1); border: 1px solid v
 }
 .voicing-row:hover { background: rgba(125,125,125,0.25); }
 .voicing-row.active { background: rgba(74,144,226,0.2); border: 1px solid #4a90e2; }
+.voicing-row-chord {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--text-color);
+    min-width: 80px;
+    letter-spacing: -0.5px;
+}
 .voicing-row-notes {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
