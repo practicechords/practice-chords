@@ -474,8 +474,8 @@ document.getElementById('back-btn').addEventListener('click', () => { stop(); do
 //   Ab로 옮겨 치고 싶을 때: 루트만 Ab로 바꾸면 자동으로 음이 재배치됨.
 
 // --- 상수 정의 ---
-const KEYBOARD_START_MIDI = 48;  // C3
-const KEYBOARD_END_MIDI = 84;    // C6 (3옥타브 + 1)
+const KEYBOARD_START_MIDI = 21;  // A0 (88건반 최저음)
+const KEYBOARD_END_MIDI = 108;   // C8 (88건반 최고음)
 const NOTE_NAMES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const NOTE_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 // 루트별 선호 표기 (b 쓰는 키 / # 쓰는 키 구분 — 간단 버전)
@@ -512,6 +512,14 @@ function buildPianoKeyboard() {
         const key = document.createElement('div');
         key.className = 'piano-key white';
         key.dataset.midi = midi;
+        // C 건반에는 옥타브 라벨 (C1, C2 … C8) 달아서 위치 파악 쉽게
+        if (noteIdx === 0) {
+            const octave = Math.floor(midi / 12) - 1;
+            const label = document.createElement('span');
+            label.className = 'piano-key-label';
+            label.textContent = 'C' + octave;
+            key.appendChild(label);
+        }
         wrapper.appendChild(key);
         whiteCount++;
     }
@@ -537,6 +545,11 @@ function buildPianoKeyboard() {
 
     kbEl.appendChild(wrapper);
 
+    // 🚀 초기 스크롤: C4(중간도, MIDI 60) 근처를 센터에 두기
+    //    전체는 A0~C8(88건반)이지만 기본적으로 C3~C5 영역이 먼저 보이게.
+    //    (rAF로 감싸서 layout이 계산된 다음 측정/스크롤되도록)
+    requestAnimationFrame(() => scrollKeyboardToMidi(60));
+
     // 클릭 이벤트 (이벤트 위임)
     wrapper.addEventListener('click', (e) => {
         const key = e.target.closest('.piano-key');
@@ -549,6 +562,34 @@ function buildPianoKeyboard() {
         }
         refreshKeyboardVisual();
     });
+}
+
+// 특정 MIDI 음이 컨테이너 가운데 오도록 스크롤
+function scrollKeyboardToMidi(targetMidi) {
+    const kbEl = document.getElementById('piano-keyboard');
+    if (!kbEl) return;
+    const whiteKeyIndexesInOctave = [0, 2, 4, 5, 7, 9, 11];
+    const whiteKeyWidth = window.innerWidth <= 850 ? 24 : 32;
+
+    // targetMidi 에 가장 가까운 "아래쪽" 흰건반을 찾고, 그것의 좌측 좌표를 계산
+    let whiteIdx = 0;
+    let targetWhiteIdx = -1;
+    for (let midi = KEYBOARD_START_MIDI; midi <= KEYBOARD_END_MIDI; midi++) {
+        const noteIdx = midi % 12;
+        if (whiteKeyIndexesInOctave.includes(noteIdx)) {
+            if (midi >= targetMidi && targetWhiteIdx === -1) {
+                targetWhiteIdx = whiteIdx;
+                break;
+            }
+            whiteIdx++;
+        }
+    }
+    if (targetWhiteIdx < 0) targetWhiteIdx = whiteIdx; // 끝에 있으면 마지막
+
+    const targetLeft = targetWhiteIdx * whiteKeyWidth;
+    // 컨테이너 가운데로 오게
+    const containerWidth = kbEl.clientWidth;
+    kbEl.scrollLeft = Math.max(0, targetLeft - containerWidth / 2);
 }
 
 // 건반 하이라이트 갱신 (active 노트만)
@@ -846,8 +887,14 @@ function renderVoicingList() {
             if (e.target.closest('.voicing-row-note')) return;
             if (e.target.closest('.voicing-row-note-editor')) return;
             currentlyHighlightedVoicingId = v.id;
-            voicingActiveMidiNotes = new Set(intervalsToMidiNotes(v.intervals));
+            const notes = intervalsToMidiNotes(v.intervals);
+            voicingActiveMidiNotes = new Set(notes);
             refreshKeyboardVisual();
+            // 보이싱이 현재 스크롤 영역 밖이면, 보이싱 중앙음으로 스크롤 이동
+            if (notes.length > 0) {
+                const centerMidi = notes[Math.floor(notes.length / 2)];
+                scrollKeyboardToMidi(centerMidi);
+            }
             renderVoicingList();
         });
 
@@ -937,6 +984,112 @@ function syncVoicingPillActiveState() {
         p.classList.toggle('active', parseInt(p.getAttribute('data-semitone')) === voicingRootSemitone);
     });
 }
+
+// =====================================================================
+// 🎹 Web MIDI API — 실제 MIDI 키보드 연결
+// =====================================================================
+// UX 원칙:
+//   - MIDI Note On → 전부 릴리스 상태(midiHeldNotes 비어있음)에서 첫 키를 누르면
+//     화면의 active 노트를 싹 비우고 새 코드 시작. 추가로 누르는 키는 그대로 쌓임.
+//   - MIDI Note Off → midiHeldNotes에서만 빼고, 화면 active는 유지.
+//     → 연주 → 릴리스 → 저장 / 다음 코드 연주... 흐름이 자연스러움.
+let midiAccess = null;
+let midiInputs = []; // 연결된 MIDIInput들
+const midiHeldNotes = new Set(); // 현재 물리적으로 눌려있는 MIDI 노트들
+
+function handleMIDIMessage(event) {
+    const [status, note, velocity] = event.data;
+    const cmd = status & 0xF0;
+    // Note On (velocity > 0)
+    if (cmd === 0x90 && velocity > 0) {
+        // 전부 릴리스 상태에서 새로 누르는 첫 음이면 화면 초기화
+        if (midiHeldNotes.size === 0) {
+            voicingActiveMidiNotes.clear();
+            currentlyHighlightedVoicingId = null;
+        }
+        midiHeldNotes.add(note);
+        // 건반 범위 안에 있을 때만 화면 반영
+        if (note >= KEYBOARD_START_MIDI && note <= KEYBOARD_END_MIDI) {
+            voicingActiveMidiNotes.add(note);
+            refreshKeyboardVisual();
+            // 화면 밖 음이면 스크롤 조정
+            scrollToMidiIfOffscreen(note);
+        }
+    }
+    // Note Off (cmd 0x80, 또는 Note On with velocity 0)
+    else if (cmd === 0x80 || (cmd === 0x90 && velocity === 0)) {
+        midiHeldNotes.delete(note);
+        // 화면 active는 유지 — 사용자가 저장할 수 있도록
+    }
+}
+
+// 해당 MIDI 음이 현재 스크롤 영역 밖이면 살짝 스크롤해서 보이게
+function scrollToMidiIfOffscreen(midi) {
+    const kbEl = document.getElementById('piano-keyboard');
+    if (!kbEl) return;
+    const keyEl = kbEl.querySelector(`.piano-key[data-midi="${midi}"]`);
+    if (!keyEl) return;
+    const keyLeft = keyEl.offsetLeft;
+    const keyRight = keyLeft + keyEl.offsetWidth;
+    const viewLeft = kbEl.scrollLeft;
+    const viewRight = viewLeft + kbEl.clientWidth;
+    // 시야 밖이면 센터로
+    if (keyLeft < viewLeft || keyRight > viewRight) {
+        scrollKeyboardToMidi(midi);
+    }
+}
+
+function setMIDIStatus(text, connected) {
+    const statusEl = document.getElementById('midi-status');
+    const btnEl = document.getElementById('midi-connect-btn');
+    if (statusEl) {
+        statusEl.textContent = text;
+        statusEl.classList.toggle('connected', !!connected);
+    }
+    if (btnEl) {
+        btnEl.classList.toggle('connected', !!connected);
+        btnEl.textContent = connected ? 'MIDI Connected' : 'Connect MIDI';
+    }
+}
+
+function attachMIDIInputs(access) {
+    // 기존 input들의 리스너 해제
+    midiInputs.forEach(inp => { inp.onmidimessage = null; });
+    midiInputs = [];
+    const names = [];
+    for (const input of access.inputs.values()) {
+        input.onmidimessage = handleMIDIMessage;
+        midiInputs.push(input);
+        names.push(input.name || 'MIDI Device');
+    }
+    if (midiInputs.length === 0) {
+        setMIDIStatus('No MIDI device found', false);
+    } else {
+        setMIDIStatus(`Connected: ${names.join(', ')}`, true);
+    }
+}
+
+async function connectMIDI() {
+    if (!navigator.requestMIDIAccess) {
+        setMIDIStatus('Web MIDI not supported in this browser', false);
+        alert('This browser does not support Web MIDI. Try Chrome or Edge.');
+        return;
+    }
+    try {
+        setMIDIStatus('Requesting permission…', false);
+        midiAccess = await navigator.requestMIDIAccess();
+        attachMIDIInputs(midiAccess);
+        // 디바이스 plug/unplug 대응
+        midiAccess.onstatechange = () => attachMIDIInputs(midiAccess);
+    } catch (err) {
+        console.error('MIDI access failed:', err);
+        setMIDIStatus('MIDI access denied', false);
+    }
+}
+
+// Connect 버튼 바인딩
+const midiBtn = document.getElementById('midi-connect-btn');
+if (midiBtn) midiBtn.addEventListener('click', connectMIDI);
 
 // --- 화면 전환 ---
 document.getElementById('voicing-btn-home').addEventListener('click', () => {
