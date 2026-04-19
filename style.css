@@ -383,6 +383,28 @@ input[type="number"] { background: rgba(125, 125, 125, 0.1); border: 1px solid v
     font-size: 0.7rem;
     color: var(--sub-text);
 }
+.voicing-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.voicing-practice-btn {
+    background: none;
+    border: 1.5px solid var(--sub-text);
+    color: var(--sub-text);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+.voicing-practice-btn:hover {
+    background: #4a90e2;
+    color: #fff;
+    border-color: #4a90e2;
+}
 .voicing-delete-btn {
     background: none;
     border: none;

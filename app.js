@@ -878,12 +878,15 @@ function renderVoicingList() {
                 <div class="voicing-row-notes">${intervalsToNoteNamesStr(v.intervals)}</div>
                 ${noteHtml}
             </div>
-            <button class="voicing-delete-btn" data-id="${v.id}" title="Delete">🗑</button>
+            <div class="voicing-row-actions">
+                <button class="voicing-practice-btn" data-id="${v.id}" title="Practice this quality in all 12 keys">▶</button>
+                <button class="voicing-delete-btn" data-id="${v.id}" title="Delete">🗑</button>
+            </div>
         `;
 
-        // 행 클릭: 보이싱을 건반에 로드 (단, 삭제 버튼이나 노트 영역 클릭은 제외)
+        // 행 클릭: 보이싱을 건반에 로드 (단, 액션 버튼/노트 영역 클릭은 제외)
         row.addEventListener('click', (e) => {
-            if (e.target.closest('.voicing-delete-btn')) return;
+            if (e.target.closest('.voicing-row-actions')) return;
             if (e.target.closest('.voicing-row-note')) return;
             if (e.target.closest('.voicing-row-note-editor')) return;
             currentlyHighlightedVoicingId = v.id;
@@ -902,6 +905,12 @@ function renderVoicingList() {
         delBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             handleVoicingDelete(v.id);
+        });
+
+        const practiceBtn = row.querySelector('.voicing-practice-btn');
+        practiceBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startPracticeFromVoicing(v);
         });
 
         // 노트 클릭 시 인라인 편집 모드로 전환
@@ -964,6 +973,38 @@ function openNoteEditor(noteEl, voicing) {
             commit(false);
         }
     });
+}
+
+// 🚀 보이싱 → 12키 연습 바로가기
+//    저장된 보이싱의 chordQuality 만 선택하고, 12 base를 전부 활성화한 뒤 연습 화면으로 진입.
+function startPracticeFromVoicing(v) {
+    // 보이싱 저장은 'M'(메이저 트라이어드)을 M으로 저장하지만 practice pill은 data-val=""
+    const targetType = v.chordQuality === 'M' ? '' : v.chordQuality;
+
+    // 1) 12 base 전부 활성
+    document.querySelectorAll('#root-pills .chord-pill').forEach(p => p.classList.add('active'));
+
+    // 2) 연습 화면의 모든 quality pill 비활성 (voicing 화면의 pill은 건드리지 않음)
+    document.querySelectorAll('#filter-panel .chord-pill[data-val]').forEach(p => p.classList.remove('active'));
+
+    // 3) 해당 quality pill만 활성
+    const typePill = document.querySelector(`#filter-panel .chord-pill[data-val="${targetType}"]`);
+    if (typePill) {
+        typePill.classList.add('active');
+    } else {
+        console.warn('No matching practice pill for quality:', v.chordQuality);
+    }
+
+    // 4) 내부 상태 동기화 + 저장
+    updateFilters();
+
+    // 5) 화면 전환: voicing → practice (home 건너뜀)
+    document.getElementById('voicing-screen').classList.add('hidden');
+    document.getElementById('practice-screen').classList.remove('hidden');
+
+    // 6) 첫 코드 띄우고 라이트 생성
+    initChords();
+    createLights();
 }
 
 function highlightSelectedVoicingIfAny() {
