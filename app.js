@@ -879,7 +879,7 @@ function renderVoicingList() {
                 ${noteHtml}
             </div>
             <div class="voicing-row-actions">
-                <button class="voicing-practice-btn" data-id="${v.id}" title="Practice this quality in all 12 keys">▶</button>
+                <button class="voicing-practice-btn" data-id="${v.id}" title="Practice this voicing in all 12 keys">▶</button>
                 <button class="voicing-delete-btn" data-id="${v.id}" title="Delete">🗑</button>
             </div>
         `;
